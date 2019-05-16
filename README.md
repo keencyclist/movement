@@ -38,4 +38,3 @@ See Notebook for details.
 ## Use Cases
 
 ## Further Extensions
-
