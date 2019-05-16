@@ -23,12 +23,15 @@ There are several other publicly available datasets of human activity data that 
 ## Exploratory Data Analysis
 
 I created triaxial scatterplots of the accelerometer and gyroscope data for each of the 15 subjects performing each of the 8 activities. For example, a typical plot of walking accelerometer data is as follows:
+
 ![plot of walking data](./images/WalkingAcc1.png)
 
 A plot of the same subject sitting looks very different:
+
 ![plot of sitting data](./images/SIttingAcc1.png)
 
 As can be seen from these plots, the subjects were asked to wait a short time before beginning the assigned activity. Thus the labels for the beginning and end of each activity period are typically incorrect. In addition, it is clear from inspecting the plots that not all subjects performed the assigned activity continuously. For example, Subject 4 stood for several periods in between bouts of running, as can be seen from the following plot:
+
 ![plot of running data](./images/RunningAcc4.png)
 
 ## Correcting the Labels
@@ -48,9 +51,10 @@ Adding one or more 1D convolution layers to the recurrent network generally impr
 
 ## Model Validation
 One of the best-fitting models was pickled and then used to predict classes for the 5-subject validation set. The overall accuracy of the predictions was 0.58, and the weighted average F1 score was 0.54. A confusion matrix by class is shown below:
+
 ![multiclass confusion matrix](./images/multiclassCM_validation.png)
 
 Although the overall accuracy of the model is low, it is able to distinguish between active and inactive states. Standing was almost always correctly classified. Lying was almost always correctly classified or incorrectly classified as sitting. When sitting was misclassified it was typically predicting standing or lying, but there were too many cases where it was labeled as walking or climbing up stairs
 
-## Further Extensions
+## Further Improvements
 This model needs to be improved before it can be a useful tool. I plan to improve the model by scaling the data by subject to account for differences between individuals (e.g., in height). I also will see if adding the magnetometer data improves the model accuracy.
