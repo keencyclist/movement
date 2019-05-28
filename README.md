@@ -8,7 +8,7 @@ Sedentary behavior has become a major public health risk around the world. Exper
 ## A Multi-Sensor in Everyone's Pocket
 
 WIth the proliferation of screens of all sizes for both work and entertainment, many people find themselves sitting for much of the day. However, the same devices can also be useful for reminding people to be active. Smartphones contain numerous sensors that can be used to classify movement, particularly the following: accelerometer, gyroscope, and magnetometer. (GPS is also used for detecting movement, but is ineffective indoors.)
-Continuously polling of smartphone sensors uses a lot of power and would drain phone batteries quickly. Therefore, a useful algorithm should be able to classify activities based on relatively infrequent polling of sensors.
+Continuously polling of smartphone sensors uses a lot of power and would drain phone batteries quickly. Therefore, a useful algorithm should be able to classify activities based on relatively infrequent polling of sensors. Several sources indicate that smartphone gyroscopes use considerably more power than accelerometers.
 
 ## A Problem of Human Activity Recognition
 There is an extensive literature on using sensors from smartphones and wearable devices to detect and classify different types of human activities. The most-used [UCI-HAR dataset](https://archive.ics.uci.edu/ml/datasets/human+activity+recognition+using+smartphones), published on UCI's machine learning repository, has accelerometer observations from 30 subjects labeled as WALKING, WALKING_UPSTAIRS, WALKING_DOWNSTAIRS, SITTING, STANDING, LAYING.
@@ -40,21 +40,38 @@ Because the subjects did not perform the assigned activities continuously for th
 
 The times when the subject was not running can clearly be seen. By inspecting this and similar plots for all the subjects, a threshold of 5 for the s.d. of the y accelerometer reading was picked as a cutoff. All samples with a s.d. less than 5 were deleted from the data. Similarly, thresholds were established for all the other activities--maxima for stationary activities (sitting, lying) and minima for moving activities. No filtering was done for standing, since it seemed that the subjects did not transition to or from standing during the recording periods.
 
-## Separating Data into Train and Test Sets
-Data from the first 10 subjects was used to develop the model. Data from the remaining 5 subjects was used to validate the model. In order to develop a generalizable model, the modeling data was further divided into train and test samples. I tried two methods: random selection of samples using the "validation split" setting in Keras and manually dividing the sample into a training group of subjects 1 to 7 and a test group of subjects 8 to 10. 
+## From 8 Activities to 3 Classes
+* Sedentary (standing, sitting, lying)
+* Light-Moderate (walking, going up stairs, going down stairs)
+* Vigorous (running, jumping)
 
-## Recurrent Neural Network
-The basic model was a recurrent neural network using GRU or LSTM. I tried a single-layer GRU model with 32 neurons. I also tried a model with two LSTM layers of 128 neurons each. (I also tried several variations between these extremes.)
+## Separating Data into Train, Test, and Holdout Sets
+Data from the first 10 subjects was used to develop and train the model. Data from the remaining 5 subjects was held out for final testing. The training data was divided into train and test samples. I tried two methods: random selection of samples using the "validation split" setting in Keras and manually dividing the sample into a training group of subjects 1 to 7 and a test group of subjects 8 to 10. 
 
-## Convolution Model
-Adding one or more 1D convolution layers to the recurrent network generally improved the accuracy on the test data (reducing overfitting). For example, a model with two convolutional layers and two GRU layers achieved an accuracy of 68% on the test data, split by subject. A similar CNN-GRU model achieved an accuracy of 75%-80% on test data split randomly.
+## Handcrafted Features
+I created a summary dataset where samples of activities conducted by a subject were grouped into windows of 100 observations (representing 2 seconds of measurement). I calculated the mean, standard deviation, and range of the triaxial measurements (x, y, and z dimensions) for both the accelerometer and the gyroscope. These 18 (3 x 3 x 2) features were used in various machine learning models to predict the class (sedentary, light-moderate PA, vigorous PA). The models tested were logistic regression, KNN, various decision trees, SVM, Naive Bayes, and XGBoost. The logistic regression model has the highest accuracy and F1 score on the validation data (although only by a small amount). An inspection of the correlation coefficients shows that many of the gyroscope features were highly correlated with the accelerometer features (r > 0.9). A logistic regression model including only the accelerometer features had the same accuracy and F1 score as the model including all features. 
 
-## Model Validation
-One of the best-fitting models was pickled and then used to predict classes for the 5-subject validation set. The overall accuracy of the predictions was 0.58, and the weighted average F1 score was 0.54. A confusion matrix by class is shown below:
+## Neural Network Model
+Instead of creating "handcrafted features," a neural network model uses the raw sensor data, formatted in this case as an array of 100 observations (2 seconds) x 6 sensor readings. Because there is a time dimension to the data, it is appropriate to use a recurrent layer. I used the gated recurrent unit (GRU) technique because it has fewer parameters than LSTM and may have better performance on smaller datasets.
+Convolutional layers can improve the result by helping the model to learn important features, preventing overfitting, and reducing the number of parameters. Batch normalization can further reduce overfitting
+The final model consisted of:
+  
+* two convolution layers, with 50 filters, 3 kernels, and RELU activation, each followed by a pooling and a batch normalization layer
+* two recurrent (GRU) layers each with 64 neurons and tanh activation (the second layer with a recurrent dropout of 0.2)
+* a dropout layer with a dropout rate of 0.1
+* a final dense layer representing the three classes to be predicted.
 
-![multiclass confusion matrix](./images/multiclassCM_validation.png)
+## Tests on Holdout Data
+The Logistic Regression model was tested on the holdout data consisting of the reamining five subjects. The overall accuracy of the predictions was 94%, and the weighted average F1 score was 0.54. A confusion matrix by class is shown below:
 
-Although the overall accuracy of the model is low, it is able to distinguish between active and inactive states. Standing was almost always correctly classified. Lying was almost always correctly classified or incorrectly classified as sitting. When sitting was misclassified it was typically predicting standing or lying, but there were too many cases where it was labeled as walking or climbing up stairs
+![confusion matrix](./images/LR_acc_only.png)
+
+The overall accuracy of the model is very high. However, the model misclassified about 600 samples as "sedentary" that were in fact light-moderate PA. There was no improvement when adding the gyroscope data. Using just one sensor and simple statistical features can produce very high accuracy.
+
+The neural network model was even better than the LR model, achieving 99% accuracy. Almost 100 samples that were actually vigorous were miscoded as "light-moderate." This is a very small error rate, and is a better type of error than the LR model in that the error concerns the degree of physical activity rather than a confusion between movement and sedentary behavior.
+
+![confusion matrix](./images/CNN_GRU_subject_reproducible.png)
+
 
 ## Further Improvements
-This model needs to be improved before it can be a useful tool. I plan to improve the model by scaling the data by subject to account for differences between individuals (e.g., in height). I also will see if adding the magnetometer data improves the model accuracy.
+This model was tested on only 15 subjects. I would like to incorporate other public datasets to create a more robust model with more subjects, different hardware, different test situations, and different environments. In addition, I would like to see if a reduction from a sampling rate of 50 Hz to 10-25 Hz still produces a robust model, since a lower sampling rate represents a significant reduction in power consumption.
