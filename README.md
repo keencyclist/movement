@@ -1,5 +1,6 @@
 # Using Smartphone Sensors to Encourage Physical Activity
 
+[Presentation](./Using%20Smartphones%20to%20Encourage%20Movement.pdf)
 
 ## Sitting: One of the Most Dangerous Daily Activities
 
@@ -19,6 +20,7 @@ Although the UCI dataset and many others ask subjects to engage in many differen
 There are several other publicly available datasets of human activity data that can be used for model development. I chose to use the [Real World Dataset](https://sensor.informatik.uni-mannheim.de/#dataset_realworld) created by the University of Mannheim - Research Group Data and Web Science. This dataset includes two more active activities (running and jumping), in addition to the same six activities in the UCI-HAR dataset. In total the 8 activity classes are: climbing down stairs, climbing up stairs, jumping, lying, standing, sitting, running/jogging, and walking. The researchers outfitted 15 subjects with smartphones or smartwatches in 7 body positions: chest, forearm, head, shin, thigh, upper arm, and waist. I decided to use only the data from the "thigh" position under the assumption that it is the most commonly used of those tested. The dataset includes readings from the following sensors: acceleration, GPS, gyroscope, light, magnetic field, and sound level. The current research was limited to the triaxial (x, y, z) data from the accelerometer and gyroscope. The subjects were asked to perform each activity for 10 minutes (except for jumping). The sensors were recorded at 50 Hz (50 observations per second).
 
 ## Exploratory Data Analysis
+[Link to EDA Notebook](./notebooks/EDA.ipynb)
 
 I created triaxial scatterplots of the accelerometer and gyroscope data for each of the 15 subjects performing each of the 8 activities. For example, a typical plot of walking accelerometer data is as follows:
 
@@ -33,6 +35,8 @@ As can be seen from these plots, the subjects were asked to wait a short time be
 ![plot of running data](./images/RunningAcc4.png)
 
 ## Correcting the Labels
+[Link to Label Correction Notebook](./notebooks/LabelCorrection.ipynb)
+
 Because the subjects did not perform the assigned activities continuously for the entire period, it was necessary to filter the data to remove periods that would be otherwise mislabeled. The modeling approach was based on dividing the raw data into 2-second windows (100 observations at 50 Hz). I labeled each 100 consecutive observations in each subject/activity with a sample number (dropping any remainder). I then calculated the standard deviation of the sensor data for each of the samples. I then plotted the standard deviations. For example, the following is a plot of the standard deviations of the accelerometer data for Subject 4, running:
 ![plot of running standard deviations](./images/SD_RunningAcc4.png)
 
@@ -46,12 +50,20 @@ I initially tested models of all eight activities. It became apparent that altho
 All of the model results below are based on classifying samples into these three classes.
 
 ## Separating Data into Train, Test, and Holdout Sets
+[Link to notebook creating the training data](./notebooks/AssembleTrainingDataset.ipynb)
+
+[Link to notebook creating the holdout data](./notebooks/AssembleHoldoutDataset.ipynb)
+
 Data from the first 10 subjects was used to develop and train the model. Data from the remaining 5 subjects was held out for final testing. The training data was divided into train and test samples. I tried two methods: random selection of samples using the "validation split" setting in Keras and manually dividing the sample into a training group of subjects 1 to 7 and a test group of subjects 8 to 10. I found that it was necessary to use a subject-based split of the training and test data. A random split means that there are observations from all 10 subjects in the training data. Although the resulting test scores are high, the model performs poorly on data from subjects not previously seen before. This is because there are significant differences between subjects. Since our use case involves the ability to detect PA from any (previously unseen) user, it is essential to insure that the model is generalizable to new subjects. "K-fold cross validation" is another form of random splitting of the training and test data. The common practice in Human Activity Recognition of creating overlapping samples compounds the problem by including the same information in the training and test data. A [study of these problems in HAR research](https://arxiv.org/abs/1904.02666) found that "k-fold cross validation artificially increases the performance of recognizers by about 10%, and even by 16% when overlapping windows are used."
 
 ## Handcrafted Features
+[Link to notebook with models using handcrafted features](./notebooks/HandcraftFeatures-Subject_PhysAct.ipynb)
+
 I created a summary dataset where samples of activities conducted by a subject were grouped into windows of 100 observations (representing 2 seconds of measurement). I calculated the mean, standard deviation, and range of the triaxial measurements (x, y, and z dimensions) for both the accelerometer and the gyroscope. These 18 (3 x 3 x 2) features were used in various machine learning models to predict the class (sedentary, light-moderate PA, vigorous PA). The models tested were logistic regression, KNN, various decision trees, SVM, Naive Bayes, and XGBoost. The logistic regression model has the highest accuracy and F1 score on the validation data (although only by a small amount). An inspection of the correlation coefficients shows that many of the gyroscope features were highly correlated with the accelerometer features (r > 0.9). A logistic regression model including only the accelerometer features had the same accuracy and F1 score as the model including all features. 
 
 ## Neural Network Model
+[Link to notebook with neural network model](./notebooks/Convolution-SubjectTTS.ipynb)
+
 Instead of creating "handcrafted features," a neural network model uses the raw sensor data, formatted in this case as an array of 100 observations (2 seconds) x 6 sensor readings. Because there is a time dimension to the data, it is appropriate to use a recurrent layer. I used the gated recurrent unit (GRU) technique because it has fewer parameters than LSTM and may have better performance on smaller datasets. Convolutional layers can improve the result by helping the model to learn important features, preventing overfitting, and reducing the number of parameters. Batch normalization was used to further reduce overfitting. The final model consisted of:
   
 * two convolution layers, with 50 filters, 3 kernels, and RELU activation, each followed by a pooling and a batch normalization layer
@@ -60,6 +72,8 @@ Instead of creating "handcrafted features," a neural network model uses the raw 
 * a final dense layer representing the three classes to be predicted.
 
 ## Tests on Holdout Data
+[Link to notebook with test of LR model on holdout data](./notebooks/Holdout-Test.ipynb)
+
 The Logistic Regression model was tested on the holdout data consisting of the reamining five subjects. The overall accuracy of the predictions was 94%, and the weighted average F1 score was 0.54. A confusion matrix by class is shown below:
 
 ![confusion matrix](./images/LR_acc_only.png)
