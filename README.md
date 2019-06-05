@@ -9,7 +9,7 @@ Sedentary behavior has become a major public health risk around the world. Exper
 ## A Multi-Sensor in Everyone's Pocket
 
 With the proliferation of screens of all sizes for both work and entertainment, many people find themselves sitting for much of the day. However, the same devices can remind people to be active. Smartphones contain numerous sensors that can be used to classify movement, including the following devices: accelerometer, gyroscope, GPS, and magnetometer (compass). GPS location can only be used outdoors, but the others are potentially effective anywhere.
-Continuously polling of smartphone sensors uses a lot of power and would drain phone batteries quickly. Therefore, a useful algorithm should be able to classify activities based on relatively infrequent polling of sensors. Several sources indicate that smartphone gyroscopes use considerably more power than accelerometers.
+Continuously polling smartphone sensors uses a lot of power and would drain phone batteries quickly. Therefore, a useful algorithm should be able to classify activities based on relatively infrequent polling of sensors. Several sources indicate that smartphone gyroscopes use considerably more power than accelerometers.
 
 ## A Problem of Human Activity Recognition
 There is an extensive literature on using sensors from smartphones and wearable devices to detect and classify different types of human activities. The most-used [UCI-HAR dataset](https://archive.ics.uci.edu/ml/datasets/human+activity+recognition+using+smartphones), published on UCI's machine learning repository, has accelerometer observations from 30 subjects labeled as WALKING, WALKING_UPSTAIRS, WALKING_DOWNSTAIRS, SITTING, STANDING, LAYING (sic).
