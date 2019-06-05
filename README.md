@@ -74,7 +74,7 @@ Instead of creating "handcrafted features," a neural network model uses the raw 
 ## Tests on Holdout Data
 [Link to notebook with test of LR model on holdout data](./notebooks/Holdout-Test.ipynb)
 
-The Logistic Regression model was tested on the holdout data consisting of the reamining five subjects. The overall accuracy of the predictions was 94%, and the weighted average F1 score was 0.54. A confusion matrix by class is shown below:
+The Logistic Regression model was tested on the holdout data consisting of the remaining five subjects. The overall accuracy of the predictions was 94%, and the weighted average F1 score was 0.54. A confusion matrix by class is shown below:
 
 ![confusion matrix](./images/LR_acc_only.png)
 
